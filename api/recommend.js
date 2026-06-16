@@ -48,7 +48,12 @@ You must return your output strictly as a clean JSON object (no markdown wrappin
 
         const data = await response.json();
         
-        // Extraction et nettoyage du JSON renvoyé par Claude
+        // Si Anthropic renvoie une erreur (ex: problème de clé), on l'affiche dans les logs
+        if (data.error) {
+            console.error("Détail de l'erreur Anthropic :", data.error);
+            return res.status(500).json({ error: `Anthropic Error: ${data.error.message}` });
+        }
+
         const rawText = data.content[0].text.trim();
         const jsonResponse = JSON.parse(rawText);
 
