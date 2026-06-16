@@ -1,0 +1,60 @@
+export default async function handler(req, res) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const { answers } = req.body;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+
+    if (!apiKey) {
+        return res.status(500).json({ error: "La clé ANTHROPIC_API_KEY n'est pas configurée dans Vercel." });
+    }
+
+    const formattedAnswers = answers.map(a => `${a.question} -> ${a.answer}`).join('\n');
+
+    const systemPrompt = `You are an elite film critic and a movie recommendation algorithm. 
+Analyze the user's current mood, energy levels, and preferences based on their quiz answers.
+Select exactly 3 distinct movies that perfectly match their state of mind. Avoid obvious blockbusters unless requested.
+You must return your output strictly as a clean JSON object (no markdown wrapping, no text outside the JSON) matching this structure:
+{
+  "matches": [
+    {
+      "title": "Movie Title",
+      "year": "YYYY",
+      "director": "Director Name",
+      "synopsis": "A short, compelling 2-sentence summary in French.",
+      "match_reason": "A direct sentence addressed to the user using 'tu' in French, explaining why this fits their specific combination of answers."
+    }
+  ]
+}`;
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-3-5-haiku-20241022',
+                max_tokens: 1000,
+                system: systemPrompt,
+                messages: [
+                    { role: 'user', content: `Here are my quiz answers:\n${formattedAnswers}` }
+                ]
+            })
+        });
+
+        const data = await response.json();
+        
+        // Extraction et nettoyage du JSON renvoyé par Claude
+        const rawText = data.content[0].text.trim();
+        const jsonResponse = JSON.parse(rawText);
+
+        return res.status(200).json(jsonResponse);
+    } catch (error) {
+        console.error("Error calling Anthropic:", error);
+        return res.status(500).json({ error: "Failed to fetch recommendations from AI." });
+    }
+}
