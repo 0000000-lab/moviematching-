@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieMatching</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Playfair Display', Georgia, serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .projector-screen {
+            background-color: #0a0a0a;
+            border: 1px solid #222222;
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.03);
+            width: 90%;
+            max-width: 650px;
+            padding: 40px;
+            text-align: center;
+            border-radius: 4px;
+            transition: all 0.5s ease;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 2px;
+            background-color: #222222;
+            margin-bottom: 30px;
+            border-radius: 2px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #ffffff;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 400;
+            line-height: 1.4;
+            margin-bottom: 30px;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid #333333;
+            padding: 16px 20px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-align: left;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover {
+            background-color: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Style des résultats */
+        .results-header {
+            font-style: italic;
+            margin-bottom: 40px;
+            font-size: 1.6rem;
+        }
+
+        .movies-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            text-align: left;
+        }
+
+        .movie-card {
+            border-bottom: 1px solid #222222;
+            padding-bottom: 30px;
+        }
+
+        .movie-card h3 {
+            font-size: 1.5rem;
+            margin: 0 0 10px 0;
+            font-weight: 400;
+        }
+
+        .movie-meta {
+            font-size: 0.9rem;
+            color: #888888;
+            margin-bottom: 15px;
+        }
+
+        .movie-synopsis {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #cccccc;
+            margin-bottom: 15px;
+        }
+
+        .movie-reason {
+            font-size: 1rem;
+            font-style: italic;
+            color: #ffffff;
+            border-left: 2px solid #ffffff;
+            padding-left: 15px;
+        }
+
+        .loader {
+            font-style: italic;
+            color: #888888;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="projector-screen" id="app-container">
+        <div id="start-screen">
+            <h1 style="font-weight: 400; margin-bottom: 10px;">MovieMatching</h1>
+            <p style="font-style: italic; color: #888888; margin-bottom: 40px;">Trouve ton match cinématographique idéal.</p>
+            <button class="option-btn" style="text-align: center; width: 100%;" onclick="startQuiz()">Commencer le test</button>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+            <h2 id="question-text">Question</h2>
+            <div class="options-container" id="options-box"></div>
+        </div>
+
+        <div id="loading-screen" class="hidden">
+            <p class="loader">Finding your perfect cinematic matches...</p>
+        </div>
+
+        <div id="results-screen" class="hidden">
+            <h2 class="results-header">Why these movies are the perfect match for you</h2>
+            <div class="movies-grid" id="movies-container"></div>
+            <button class="option-btn" style="text-align: center; width: 100%; margin-top: 40px;" onclick="location.reload()">Recommencer</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            { q: "⚡ What is your energy level tonight?", options: ["🪫 Survival mode (need a comfort movie)", "🔋 Standard (ready for anything)", "🧠 Max focus (ready for a 3-hour masterpiece)"] },
+            { q: "👥 Who are you watching this movie with?", options: ["🧍 Solo", "🔥 On a date (romance/sensual vibe)", "🍿 Popcorn mode with friends", "👨‍👩‍👧‍👦 With family"] },
+            { q: "⏳ How much time do you want to spend watching?", options: ["⏱️ Under 1.5 hours (quick & efficient)", "🎬 Standard format (around 2 hours)", "📜 A true cinematic epic (2.5+ hours)"] },
+            { q: "🌌 What visual and atmospheric 'vibe' are you looking for?", options: ["☀️ Bright and colorful (escapism)", "🌧️ Dark and rainy (thriller/nordic noir vibe)", "📐 Sleek aesthetic/Design-heavy (eye candy)", "🔲 Neutral"] },
+            { q: "🎭 Choose your emotional therapy for tonight:", options: ["😂 I want a good laugh", "😭 I want to cry my eyes out", "💓 I want my heart racing at 100 mph (tension/adrenaline)", "🌀 I want to think deeply (mind-bending/twist ending)"] },
+            { q: "⚠️ What level of violence or tension are you willing to accept?", options: ["🕊️ Zero stress (pure feel-good)", "🧠 Psychological tension (no blood)", "🩸 Action and blood (gore/horror accepted)"] },
+            { q: "⏳ If you had to jump into a time machine tonight?", options: ["🏛️ Back to the past (historical/period piece)", "🏙️ Anchored in the present (contemporary)", "🚀 Heading into the future (sci-fi/dystopia)"] },
+            { q: "🎼 What are you looking for regarding the soundtrack and pacing?", options: ["🌿 Contemplative and poetic (taking its time)", "⚡ Fast-paced and dynamic (sharp dialogues/quick cuts)", "💥 Blockbuster (grand sonic spectacle)"] },
+            { q: "📖 What type of story speaks to you most tonight?", options: ["📰 A true story", "👑 A powerful individual destiny (biopic/intimate drama)", "🔮 An original concept (fantasy/mystery)", "🪵 A simple slice of life"] },
+            { q: "🚨 Your biggest fear when starting a movie is...", options: ["👴 That it's too old", "📖 That it's too 'intellectual' or subtitled", "💎 That I've already seen it 100 times (need a hidden gem)", "🛒 That it's too commercial"] }
+        ];
+
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+
+        function startQuiz() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const currentQ = questions[currentQuestionIndex];
+            document.getElementById('question-text').innerText = currentQ.q;
+            
+            const optionsBox = document.getElementById('options-box');
+            optionsBox.innerHTML = '';
+            
+            currentQ.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerText = option;
+                button.onclick = () => handleAnswer(option);
+                optionsBox.appendChild(button);
+            });
+
+            const progressPercent = ((currentQuestionIndex) / questions.length) * 100;
+            document.getElementById('progress').style.width = `${progressPercent}%`;
+        }
+
+        function handleAnswer(answer) {
+            userAnswers.push({ question: questions[currentQuestionIndex].q, answer: answer });
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                getRecommendations();
+            }
+        }
+
+        async function getRecommendations() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('loading-screen').classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answers: userAnswers })
+                });
+
+                const data = await response.json();
+                displayResults(data.matches);
+            } catch (error) {
+                alert("Une erreur est survenue lors de la recherche des films. Vérifie tes logs Vercel.");
+                console.error(error);
+            }
+        }
+
+        function displayResults(movies) {
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('results-screen').classList.remove('hidden');
+
+            const container = document.getElementById('movies-container');
+            container.innerHTML = '';
+
+            movies.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.innerHTML = `
+                    <h3>${movie.title}</h3>
+                    <div class="movie-meta">${movie.year} • Dirigé par ${movie.director}</div>
+                    <div class="movie-synopsis">${movie.synopsis}</div>
+                    <div class="movie-reason">${movie.match_reason}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
