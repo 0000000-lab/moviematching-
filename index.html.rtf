@@ -1,0 +1,268 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2868
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww28600\viewh18000\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 <!DOCTYPE html>\
+<html lang="fr">\
+<head>\
+    <meta charset="UTF-8">\
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">\
+    <title>MovieMatching</title>\
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">\
+    <style>\
+        body \{\
+            background-color: #000000;\
+            color: #ffffff;\
+            font-family: 'Playfair Display', Georgia, serif;\
+            margin: 0;\
+            padding: 0;\
+            display: flex;\
+            justify-content: center;\
+            align-items: center;\
+            min-height: 100vh;\
+            overflow-x: hidden;\
+        \}\
+\
+        .projector-screen \{\
+            background-color: #0a0a0a;\
+            border: 1px solid #222222;\
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.03);\
+            width: 90%;\
+            max-width: 650px;\
+            padding: 40px;\
+            text-align: center;\
+            border-radius: 4px;\
+            transition: all 0.5s ease;\
+        \}\
+\
+        .progress-bar \{\
+            width: 100%;\
+            height: 2px;\
+            background-color: #222222;\
+            margin-bottom: 30px;\
+            border-radius: 2px;\
+        \}\
+\
+        .progress-fill \{\
+            height: 100%;\
+            background-color: #ffffff;\
+            width: 0%;\
+            transition: width 0.3s ease;\
+        \}\
+\
+        h2 \{\
+            font-size: 1.8rem;\
+            font-weight: 400;\
+            line-height: 1.4;\
+            margin-bottom: 30px;\
+        \}\
+\
+        .options-container \{\
+            display: flex;\
+            flex-direction: column;\
+            gap: 15px;\
+        \}\
+\
+        .option-btn \{\
+            background: transparent;\
+            color: #ffffff;\
+            border: 1px solid #333333;\
+            padding: 16px 20px;\
+            font-family: 'Playfair Display', serif;\
+            font-size: 1.1rem;\
+            cursor: pointer;\
+            text-align: left;\
+            border-radius: 4px;\
+            transition: all 0.3s ease;\
+        \}\
+\
+        .option-btn:hover \{\
+            background-color: #ffffff;\
+            color: #000000;\
+            border-color: #ffffff;\
+        \}\
+\
+        .hidden \{ display: none !important; \}\
+\
+        /* Style des r\'e9sultats */\
+        .results-header \{\
+            font-style: italic;\
+            margin-bottom: 40px;\
+            font-size: 1.6rem;\
+        \}\
+\
+        .movies-grid \{\
+            display: flex;\
+            flex-direction: column;\
+            gap: 40px;\
+            text-align: left;\
+        \}\
+\
+        .movie-card \{\
+            border-bottom: 1px solid #222222;\
+            padding-bottom: 30px;\
+        \}\
+\
+        .movie-card h3 \{\
+            font-size: 1.5rem;\
+            margin: 0 0 10px 0;\
+            font-weight: 400;\
+        \}\
+\
+        .movie-meta \{\
+            font-size: 0.9rem;\
+            color: #888888;\
+            margin-bottom: 15px;\
+        \}\
+\
+        .movie-synopsis \{\
+            font-size: 1rem;\
+            line-height: 1.6;\
+            color: #cccccc;\
+            margin-bottom: 15px;\
+        \}\
+\
+        .movie-reason \{\
+            font-size: 1rem;\
+            font-style: italic;\
+            color: #ffffff;\
+            border-left: 2px solid #ffffff;\
+            padding-left: 15px;\
+        \}\
+\
+        .loader \{\
+            font-style: italic;\
+            color: #888888;\
+            animation: pulse 1.5s infinite;\
+        \}\
+\
+        @keyframes pulse \{\
+            0% \{ opacity: 0.4; \}\
+            50% \{ opacity: 1; \}\
+            100% \{ opacity: 0.4; \}\
+        \}\
+    </style>\
+</head>\
+<body>\
+\
+    <div class="projector-screen" id="app-container">\
+        <div id="start-screen">\
+            <h1 style="font-weight: 400; margin-bottom: 10px;">MovieMatching</h1>\
+            <p style="font-style: italic; color: #888888; margin-bottom: 40px;">Trouve ton match cin\'e9matographique id\'e9al.</p>\
+            <button class="option-btn" style="text-align: center; width: 100%;" onclick="startQuiz()">Commencer le test</button>\
+        </div>\
+\
+        <div id="quiz-screen" class="hidden">\
+            <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>\
+            <h2 id="question-text">Question</h2>\
+            <div class="options-container" id="options-box"></div>\
+        </div>\
+\
+        <div id="loading-screen" class="hidden">\
+            <p class="loader">Finding your perfect cinematic matches...</p>\
+        </div>\
+\
+        <div id="results-screen" class="hidden">\
+            <h2 class="results-header">Why these movies are the perfect match for you</h2>\
+            <div class="movies-grid" id="movies-container"></div>\
+            <button class="option-btn" style="text-align: center; width: 100%; margin-top: 40px;" onclick="location.reload()">Recommencer</button>\
+        </div>\
+    </div>\
+\
+    <script>\
+        const questions = [\
+            \{ q: "\uc0\u9889  What is your energy level tonight?", options: ["\u55358 \u57003  Survival mode (need a comfort movie)", "\u55357 \u56587  Standard (ready for anything)", "\u55358 \u56800  Max focus (ready for a 3-hour masterpiece)"] \},\
+            \{ q: "\uc0\u55357 \u56421  Who are you watching this movie with?", options: ["\u55358 \u56781  Solo", "\u55357 \u56613  On a date (romance/sensual vibe)", "\u55356 \u57215  Popcorn mode with friends", "\u55357 \u56424 \u8205 \u55357 \u56425 \u8205 \u55357 \u56423 \u8205 \u55357 \u56422  With family"] \},\
+            \{ q: "\uc0\u9203  How much time do you want to spend watching?", options: ["\u9201 \u65039  Under 1.5 hours (quick & efficient)", "\u55356 \u57260  Standard format (around 2 hours)", "\u55357 \u56540  A true cinematic epic (2.5+ hours)"] \},\
+            \{ q: "\uc0\u55356 \u57100  What visual and atmospheric 'vibe' are you looking for?", options: ["\u9728 \u65039  Bright and colorful (escapism)", "\u55356 \u57127 \u65039  Dark and rainy (thriller/nordic noir vibe)", "\u55357 \u56528  Sleek aesthetic/Design-heavy (eye candy)", "\u55357 \u56626  Neutral"] \},\
+            \{ q: "\uc0\u55356 \u57261  Choose your emotional therapy for tonight:", options: ["\u55357 \u56834  I want a good laugh", "\u55357 \u56877  I want to cry my eyes out", "\u55357 \u56467  I want my heart racing at 100 mph (tension/adrenaline)", "\u55356 \u57088  I want to think deeply (mind-bending/twist ending)"] \},\
+            \{ q: "\uc0\u9888 \u65039  What level of violence or tension are you willing to accept?", options: ["\u55357 \u56650 \u65039  Zero stress (pure feel-good)", "\u55358 \u56800  Psychological tension (no blood)", "\u55358 \u56952  Action and blood (gore/horror accepted)"] \},\
+            \{ q: "\uc0\u9203  If you had to jump into a time machine tonight?", options: ["\u55356 \u57307 \u65039  Back to the past (historical/period piece)", "\u55356 \u57305 \u65039  Anchored in the present (contemporary)", "\u55357 \u56960  Heading into the future (sci-fi/dystopia)"] \},\
+            \{ q: "\uc0\u55356 \u57276  What are you looking for regarding the soundtrack and pacing?", options: ["\u55356 \u57151  Contemplative and poetic (taking its time)", "\u9889  Fast-paced and dynamic (sharp dialogues/quick cuts)", "\u55357 \u56485  Blockbuster (grand sonic spectacle)"] \},\
+            \{ q: "\uc0\u55357 \u56534  What type of story speaks to you most tonight?", options: ["\u55357 \u56560  A true story", "\u55357 \u56401  A powerful individual destiny (biopic/intimate drama)", "\u55357 \u56622  An original concept (fantasy/mystery)", "\u55358 \u57013  A simple slice of life"] \},\
+            \{ q: "\uc0\u55357 \u57000  Your biggest fear when starting a movie is...", options: ["\u55357 \u56436  That it's too old", "\u55357 \u56534  That it's too 'intellectual' or subtitled", "\u55357 \u56462  That I've already seen it 100 times (need a hidden gem)", "\u55357 \u57042  That it's too commercial"] \}\
+        ];\
+\
+        let currentQuestionIndex = 0;\
+        let userAnswers = [];\
+\
+        function startQuiz() \{\
+            document.getElementById('start-screen').classList.add('hidden');\
+            document.getElementById('quiz-screen').classList.remove('hidden');\
+            showQuestion();\
+        \}\
+\
+        function showQuestion() \{\
+            const currentQ = questions[currentQuestionIndex];\
+            document.getElementById('question-text').innerText = currentQ.q;\
+            \
+            const optionsBox = document.getElementById('options-box');\
+            optionsBox.innerHTML = '';\
+            \
+            currentQ.options.forEach(option => \{\
+                const button = document.createElement('button');\
+                button.className = 'option-btn';\
+                button.innerText = option;\
+                button.onclick = () => handleAnswer(option);\
+                optionsBox.appendChild(button);\
+            \});\
+\
+            const progressPercent = ((currentQuestionIndex) / questions.length) * 100;\
+            document.getElementById('progress').style.width = `$\{progressPercent\}%`;\
+        \}\
+\
+        function handleAnswer(answer) \{\
+            userAnswers.push(\{ question: questions[currentQuestionIndex].q, answer: answer \});\
+            currentQuestionIndex++;\
+\
+            if (currentQuestionIndex < questions.length) \{\
+                showQuestion();\
+            \} else \{\
+                getRecommendations();\
+            \}\
+        \}\
+\
+        async function getRecommendations() \{\
+            document.getElementById('quiz-screen').classList.add('hidden');\
+            document.getElementById('loading-screen').classList.remove('hidden');\
+\
+            try \{\
+                const response = await fetch('/api/recommend', \{\
+                    method: 'POST',\
+                    headers: \{ 'Content-Type': 'application/json' \},\
+                    body: JSON.stringify(\{ answers: userAnswers \})\
+                \});\
+\
+                const data = await response.json();\
+                displayResults(data.matches);\
+            \} catch (error) \{\
+                alert("Une erreur est survenue lors de la recherche des films. V\'e9rifie tes logs Vercel.");\
+                console.error(error);\
+            \}\
+        \}\
+\
+        function displayResults(movies) \{\
+            document.getElementById('loading-screen').classList.add('hidden');\
+            document.getElementById('results-screen').classList.remove('hidden');\
+\
+            const container = document.getElementById('movies-container');\
+            container.innerHTML = '';\
+\
+            movies.forEach(movie => \{\
+                const card = document.createElement('div');\
+                card.className = 'movie-card';\
+                card.innerHTML = `\
+                    <h3>$\{movie.title\}</h3>\
+                    <div class="movie-meta">$\{movie.year\} \'95 Dirig\'e9 par $\{movie.director\}</div>\
+                    <div class="movie-synopsis">$\{movie.synopsis\}</div>\
+                    <div class="movie-reason">$\{movie.match_reason\}</div>\
+                `;\
+                container.appendChild(card);\
+            \});\
+        \}\
+    </script>\
+</body>\
+</html>}
